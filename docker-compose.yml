@@ -1,4 +1,4 @@
-version: '3.9.12'
+version: '3'
 
 services:
   database-service:
@@ -33,7 +33,6 @@ services:
   dash-service:
     build:
       context: ./dash
-      dockerfile: DockerfileDash
     volumes:
       - ./dash:/usr/src/app
     ports:
@@ -41,8 +40,7 @@ services:
     networks:
       - app-simulador
     depends_on:
-      - database-service
-    command: ["python", "simulador_v13.py"]  # Añadir esta línea para ejecutar tu aplicación Dash
+      - api-service
     container_name: dash-simulaciones
 
 networks:

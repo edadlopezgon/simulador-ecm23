@@ -37,7 +37,7 @@ def sim_serie():
 
 @app.route('/obtener_datos')
 def get_data():
-    querie_data = 'SELECT * FROM db_historical_data;'
+    querie_data = 'SELECT fechas,vista_red_mn  FROM db_historical_data ;'
     logging.debug("Iniciando obtener datos")
     try:
         logging.debug(execute_queries([querie_data]))
@@ -47,6 +47,18 @@ def get_data():
     except Exception as ex:
         logging.debug(ex)
         return {"message":"error en consulta de datos en servicio faker-service"}
+    
+@app.route('/ejemplo')
+def get_ejemplo():
+    try:
+        aux = [{"fechas": "2007-01-01", "vista_red_mn": "68562.32798"}, 
+               {"fechas": "2007-02-01", "vista_red_mn": "68639.77640"}]
+        
+        return json.dumps(aux)
+    except Exception as ex:
+        logging.debug(ex)
+        return {"message":"error en consulta de datos en servicio faker-service"}
+
 
 
 

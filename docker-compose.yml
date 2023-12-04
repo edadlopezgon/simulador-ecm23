@@ -10,6 +10,8 @@ services:
     volumes:
       - ./database_postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./database_postgresql/historical_data.csv:/data/historical_data.csv
+      - ./database_postgresql/exog_forecast_data.csv:/data/exog_forecast_data.csv
+      - ./database_postgresql/exog_historical_data.csv:/data/exog_historical_data.csv
       - database-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"

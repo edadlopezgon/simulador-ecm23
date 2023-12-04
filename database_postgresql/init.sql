@@ -5,6 +5,31 @@ CREATE TABLE db_simulations (
     variables VARCHAR(255),
     values_variables NUMERIC
 );
+CREATE TABLE db_historical_exogen_variables (
+    fecha DATE NOT NULL,
+    pib DECIMAL,
+    tasa_desempleo DECIMAL,
+    inpc DECIMAL,
+    tipo_cambio_usd DECIMAL,
+    cetes_6m DECIMAL,
+    cetes_12m DECIMAL,
+    bonos_m_10a DECIMAL,
+    empleo_imss DECIMAL,
+    salario DECIMAL
+);
+
+CREATE TABLE db_forecast_exogen_variables (
+    fecha_pronos DATE NOT NULL,
+    pib DECIMAL,
+    tasa_desempleo DECIMAL,
+    inpc DECIMAL,
+    tipo_cambio_usd DECIMAL,
+    cetes_6m DECIMAL,
+    cetes_12m DECIMAL,
+    bonos_m_10a DECIMAL,
+    empleo_imss DECIMAL,
+    salario DECIMAL
+);
 
 CREATE TABLE db_historical_data (
     fechas DATE,
@@ -63,6 +88,18 @@ CREATE TABLE db_historical_data (
 );
 COPY db_historical_data
   FROM '/data/historical_data.csv'
+  DELIMITER ','
+  CSV HEADER
+  NULL as 'NA';
+
+COPY db_historical_exogen_variables
+  FROM '/data/exog_historical_data.csv'
+  DELIMITER ','
+  CSV HEADER
+  NULL as 'NA';
+
+COPY db_forecast_exogen_variables
+  FROM '/data/exog_forecast_data.csv'
   DELIMITER ','
   CSV HEADER
   NULL as 'NA';

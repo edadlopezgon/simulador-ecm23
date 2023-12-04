@@ -51,7 +51,6 @@ def get_data():
 @app.route('/get_products_names')
 def get_products_names():
     querie_data = 'SELECT column_name FROM information_schema.columns WHERE table_name = \'db_historical_data\'  AND column_name != \'fechas\';'
-    logging.debug("Iniciando obtener datos")
     try:
         logging.debug(execute_queries([querie_data]))
         data_profiles = json.loads(execute_queries([querie_data],"SELECT"))
@@ -65,18 +64,11 @@ def get_products_names():
 def receive_data():
     if request.method == 'POST':
 
-        logging.debug('SI ejecuto el metodo post')
-        #data = json.loads(request.data)
         data = request.get_json()
-        logging.debug(data)
         selected_column = data['column']
-        #logging.debug(selected_column)
-        #selected_column = data .get('column')
         querie_data = f'SELECT fechas, {selected_column}  FROM db_historical_data ;'
         try:
-            #logging.debug(execute_queries([querie_data]))
-            data_profiles = json.loads(execute_queries([querie_data],"SELECT"))
-            
+            data_profiles = json.loads(execute_queries([querie_data],"SELECT"))            
         except Exception as ex:
             logging.debug(ex)
             return {"message":"error en consulta de datos en servicio faker-service"}

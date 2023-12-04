@@ -67,7 +67,7 @@ bbva_logo = "https://region6.bfp.gov.ph/wp-content/uploads/2020/10/Icon_47-512.p
 navbar = dbc.NavbarSimple(
 
     children=[
-        dbc.Button("Esconder Menú", outline=True, color="#2DCCCD", className="mr-2", id="btn_sidebar",
+        dbc.Button("Ocultar", outline=True, color="#2DCCCD", className="mr-2", id="btn_sidebar",
                   style={'font-family': 'Verdana', 'color':'#f8f9fa'}),
         dbc.DropdownMenu(
             children=[
@@ -77,14 +77,7 @@ navbar = dbc.NavbarSimple(
             nav=True,
             in_navbar=True,
             label="Contenido",
-        ),
-            html.A(
-            dbc.Row(
-                [
-                    dbc.Col(html.Img(src=bbva_logo, height="40px"))
-                ],
-                align="center",
-            ))
+        )
 
        ],
     brand="BBVA",
@@ -164,38 +157,19 @@ sidebar = html.Div(
     [
         html.H2("Simulador", style={'textAlign': 'center', 'width': '30px','font-family': 'Verdana','color':'#004481'}),
         html.Hr(),
-        dbc.Nav(
-            [
-                html.Br(style={'color':'#004481'}),
-                dcc.Dropdown(
-                        id='select_vars',
-                        placeholder = 'Elige una variable',
-                        style={'textAlign': 'center','font-family': 'Verdana','color':'#004481'}
-                      ),
-                html.Hr(),
-                edit_vars,
-                html.Br(),
-                html.Button('Editar Tabla',id='boton-editar_tabla',n_clicks=0,
-                            style={'font-family': 'Verdana','color':'#f8f9fa','backgroundColor': '#004481'},
-                           className="mr-2"
-                          ),
-                html.Br(),
-                html.Button('Simular', id='boton-simular', n_clicks = 0,
-                            style={'font-family': 'Verdana','color':'#f8f9fa','backgroundColor': '#004481'},
-                           className="mr-2",
-                        ),
-                html.Br(),
-            ],
-            vertical=True,
-            pills=True,
-        ),
+        html.H4("Integrantes"),
+        html.Span("Edgar López Gónzalez"),
+        html.Br(),
+        html.Span("Aline Perez López")
     ],
     id="sidebar",
     style=SIDEBAR_STYLE,
 )
 
 content = html.Div([html.Div([
-                            html.Div([       
+                            html.H1('Comportamiento histórico de la actividad bancaria'),
+                            html.Div([    
+                                        html.P('Elige un producto:', style={'display': 'inline-block', 'marginRight': '10px'}),
                                         dcc.Dropdown(
                                         id='demo-dropdown',
                                         options=[{'label': x, 'value': x} for x in get_product_names()],
@@ -205,7 +179,7 @@ content = html.Div([html.Div([
                                         #multi =True
                                         ),
                                      ]),
-                             html.Div(id='output-container'),
+                             
                              html.Div([
                                         dcc.Graph(id='x-time-series')      
                                      ]),
@@ -216,11 +190,12 @@ content = html.Div([html.Div([
                                     id='table-sims',
                                     fixed_rows = {'headers':True, 'data':0},
                                     column_selectable="multi",
-                                    export_format='xlsx',
-                                    export_headers='display',
                                     merge_duplicate_headers=True,
+                                    page_action='native',
+                                    page_current=0,
+                                    page_size=10,
                                     fixed_columns={'headers': True, 'data': 1 },
-                                    style_table={'height': '300px','width':'3000px','overflowY': 'auto','font-family':
+                                    style_table={'height': '300px','width':'500px','overflowY': 'auto','font-family':
                                                  'Verdana','color':'#004481'},
                                     style_header={
                                                         'backgroundColor': 'rgb(230, 230, 230)',
@@ -333,7 +308,7 @@ def update_graph(selected_column):
             data = get_product_historical_data(selected_column)
             # Generar la gráfica usando la función create_time_series
             fig = create_time_series(data)
-            data_index = data.reset_index()
+            data_index = data.sort_index(ascending=False).reset_index()
             table_columns = [{'name': col, 'id': col} for col in data_index.columns]
         except Exception as e:
             logging.debug(e)

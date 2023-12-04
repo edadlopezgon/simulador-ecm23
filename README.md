@@ -28,10 +28,9 @@ El simulador mostrado en este espacio es una prueba piloto que integra un conjun
 
 | Nº | Producto                               |
 |---|----------------------------------------|
-| 01 | **Cartera de Empresas Moneda Nacional**   |
-| 02 | **Cartera Hipotecaria**                   |
-| 03 | **Ahorro Moneda Nacional**                 |
-| 04 | **Vista Moneda Nacional**                  |
+| 01 | **Cartera Hipotecaria**                   |
+| 02 | **Ahorro Moneda Nacional**                 |
+| 03 | **Vista Moneda Nacional**                  |
 
 **Variables Macroeconómicas:**
 

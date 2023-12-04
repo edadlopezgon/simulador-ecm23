@@ -9,6 +9,7 @@ services:
       POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - ./database_postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./database_postgresql/historical_data.csv:/data/historical_data.csv
       - database-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"

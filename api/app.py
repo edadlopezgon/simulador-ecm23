@@ -37,7 +37,7 @@ def sim_serie():
 
 @app.route('/obtener_datos')
 def get_data():
-    querie_data = 'SELECT * FROM db_simulations;'
+    querie_data = 'SELECT * FROM db_historical_data;'
     logging.debug("Iniciando obtener datos")
     try:
         logging.debug(execute_queries([querie_data]))

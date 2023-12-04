@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request, jsonify
 from sqlalchemy import create_engine
 import logging
 import json
@@ -37,7 +37,7 @@ def sim_serie():
 
 @app.route('/obtener_datos')
 def get_data():
-    querie_data = 'SELECT fechas,vista_red_mn  FROM db_historical_data ;'
+    querie_data = 'SELECT *  FROM db_historical_data ;'
     logging.debug("Iniciando obtener datos")
     try:
         logging.debug(execute_queries([querie_data]))
@@ -48,17 +48,42 @@ def get_data():
         logging.debug(ex)
         return {"message":"error en consulta de datos en servicio faker-service"}
     
-@app.route('/ejemplo')
-def get_ejemplo():
+@app.route('/get_products_names')
+def get_products_names():
+    querie_data = 'SELECT column_name FROM information_schema.columns WHERE table_name = \'db_historical_data\'  AND column_name != \'fechas\';'
+    logging.debug("Iniciando obtener datos")
     try:
-        aux = [{"fechas": "2007-01-01", "vista_red_mn": "68562.32798"}, 
-               {"fechas": "2007-02-01", "vista_red_mn": "68639.77640"}]
+        logging.debug(execute_queries([querie_data]))
+        data_profiles = json.loads(execute_queries([querie_data],"SELECT"))
         
-        return json.dumps(aux)
+        return json.dumps(data_profiles)
     except Exception as ex:
         logging.debug(ex)
         return {"message":"error en consulta de datos en servicio faker-service"}
+    
+@app.route('/get_product_historical_data', methods=['POST'])
+def receive_data():
+    if request.method == 'POST':
 
+        logging.debug('SI ejecuto el metodo post')
+        #data = json.loads(request.data)
+        data = request.get_json()
+        logging.debug(data)
+        selected_column = data['column']
+        #logging.debug(selected_column)
+        #selected_column = data .get('column')
+        querie_data = f'SELECT fechas, {selected_column}  FROM db_historical_data ;'
+        try:
+            #logging.debug(execute_queries([querie_data]))
+            data_profiles = json.loads(execute_queries([querie_data],"SELECT"))
+            
+        except Exception as ex:
+            logging.debug(ex)
+            return {"message":"error en consulta de datos en servicio faker-service"}
+        
+        return json.dumps(data_profiles)
+        #return {"message":f"error en consulta de datos en servicio faker-service {selected_column}"}
+    
 
 
 

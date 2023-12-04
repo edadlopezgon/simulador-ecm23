@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 import logging
 import json
 import pickle
+import pandas as pd
 
 app = Flask(__name__)
 
@@ -51,7 +52,7 @@ def get_data():
     
 @app.route('/get_products_names')
 def get_products_names():
-    querie_data = 'SELECT column_name FROM information_schema.columns WHERE table_name = \'db_historical_data\'  AND column_name in (\'hipotecaria\', \'empresas_mn\',\'vista_red_mn\',\'ahorro_red_mn\');'
+    querie_data = 'SELECT column_name FROM information_schema.columns WHERE table_name = \'db_historical_data\'  AND column_name in (\'hipotecaria\',\'vista_red_mn\',\'ahorro_red_mn\');'
     try:
         logging.debug(execute_queries([querie_data]))
         data_profiles = json.loads(execute_queries([querie_data],"SELECT"))
@@ -99,9 +100,80 @@ def receive_data_training():
             return {"message":"error en consulta de datos en servicio faker-service"}
         
         return json.dumps(data_profiles)
+
+@app.route('/get_forecast', methods=['POST'])
+def generate_forecast_of():
+    if request.method == 'POST':
+        try:
+            data = request.get_json()
+            selected_column = data['model_name']
+            querie_data = f'SELECT  variables_model  FROM db_models_features WHERE model_name= \'{selected_column}\' ;'
+            try:
+                data_profiles = json.loads(execute_queries([querie_data],"SELECT"))   
+                columns_names = ','.join([x['variables_model'] for x in data_profiles ]) 
+                logging.debug(columns_names)        
+            except Exception as ex:
+                logging.debug(ex)
+                return {"message":"error en consulta de datos en servicio faker-service"}
+            
+            querie_data = f'SELECT  fecha_pronos, {columns_names} FROM db_forecast_exogen_variables;'
+            try:
+                data_profiles = json.loads(execute_queries([querie_data],"SELECT"))   
+                logging.debug(data_profiles)        
+            except Exception as ex:
+                logging.debug(ex)
+                return {"message":"error en consulta de datos en servicio faker-service"}
+
+            try:
+                with open(f'models/{selected_column}.pkl', 'rb') as f:
+                    loaded_model = pickle.load(f)
+                    logging.debug(type(loaded_model)) 
+                    forecast = generate_forecast(data_profiles, loaded_model)
+                    data = [{"variables":data_profiles, "forecast": forecast}]
+            except Exception as ex:
+                logging.debug(ex)
+                return {"message":"error en consulta de datos en servicio faker-service"}
+            
+
+
+        except Exception as e:
+            logging.debug(e)
+    
+    return json.dumps(data)
+
+@app.route('/get_forecast_simulacion', methods=['POST'])
+def generate_forecast_simulate():
+    if request.method == 'POST':
+        try:
+            data = request.get_json()
+            data = json.loads(data)[0]
+            model_name = data['model_name']
+            data = data['variables']
+            
+            try:
+                with open(f'models/{model_name}.pkl', 'rb') as f:
+                    loaded_model = pickle.load(f)
+                    logging.debug(type(loaded_model)) 
+                    generate_forecast(data, loaded_model)
+            except Exception as ex:
+                logging.debug(ex)
+                return {"message":"error en consulta de datos en servicio faker-service"}
+
+
+        except Exception as e:
+            logging.debug(e)
+    
+    return {"message":"Recibido"}
          
 
-
+def generate_forecast(data, model):
+    data_pd = pd.DataFrame(data)
+    if 'fecha_pronos' in data_pd.columns:
+        data_pd.drop('fecha_pronos', axis=1, inplace=True) 
+    forecast = model.predict(data_pd)
+    logging.debug(forecast)
+    forecast = [str(x) for x in forecast]
+    return forecast
 
 
 if __name__ == '__main__':

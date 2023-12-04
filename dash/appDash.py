@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly
-
+import json
 import dash
 import dash_bootstrap_components as dbc
 from dash import dcc,dash_table,html
@@ -61,6 +61,38 @@ def get_exog_historical_data(selected_column):
     df[col_numeric] = df[col_numeric].apply(pd.to_numeric, errors='coerce')
     df.set_index('fecha', inplace=True)
     
+    return df
+
+def get_forecast( model_name):
+    url = "http://api-service:3000/get_forecast"
+    info = {'model_name': model_name}
+    json_data = requests.post(url, json=info).json()
+    logging.debug('REgreso del forecast')
+    logging.debug(type(json_data))
+    data = json_data[0]
+    df = pd.DataFrame(data['variables'])
+    forecast = data['forecast']
+    forecast = [float(x) for x in forecast]
+    
+    #df = pd.DataFrame(json_data)
+    df['fecha_pronos'] = pd.to_datetime(df['fecha_pronos'], format='%Y-%m-%d')
+
+    col_numeric = [x for x in df.columns.tolist() if x != 'fecha_pronos']
+    df[col_numeric] = df[col_numeric].apply(pd.to_numeric, errors='coerce')
+    df[model_name] = forecast
+
+    return df
+
+def get_forecast_simulacion(data, model_name):
+    url = "http://api-service:3000/get_forecast_simulacion"
+    info = [{'variables':data, 'model_name': model_name}]
+    json_data = requests.post(url, json=json.dumps(info)).json()
+    
+    #df = pd.DataFrame(json_data)
+    #df['fechas'] = pd.to_datetime(df['fechas'], format='%Y-%m-%d')
+    #df[selected_column] = pd.to_numeric(df[selected_column])
+    #df.set_index('fechas', inplace=True)
+    df = pd.DataFrame()
     return df
 
 
@@ -220,16 +252,29 @@ content = html.Div([html.Div([
                                     )
                              ]),
                     html.Hr(),
+                    html.H1('Pronósticos'),
+                    html.Div([
+                            html.Button('Generar pronósticos', id='button-forecast', style= {
+                                                                                    'background-color': '#004481',  # Color azul de BBVA
+                                                                                    'border': 'none',
+                                                                                    'color': 'white',
+                                                                                    'text-align': 'center',
+                                                                                    'text-decoration': 'none',
+                                                                                    'display': 'inline-block',
+                                                                                    'font-size': '16px',
+                                                                                    'padding': '10px 20px',
+                                                                                    'margin': '4px 2px',
+                                                                                    'cursor': 'pointer',
+                                                                                    'border-radius': '12px'
+                                                                                })]),
                     html.Div([
                                     dash_table.DataTable(
-                                    id='table',
-                                    columns=[{"name": i, "id": i} for i in ls],
-                                    editable = True,
+                                    id='table-forecast',
                                     fixed_rows = {'headers':True, 'data':0},
-                                    export_format='xlsx',
-                                    export_headers='display',
                                     merge_duplicate_headers=True,
-                                    fixed_columns={'headers': True, 'data': 1 },
+                                    page_action='native',
+                                    page_current=0,
+                                    page_size=10,
                                     style_cell={
                                         'height': 'auto',
                                         'minWidth': '180px', 'width': '180px', 'maxWidth': '180px'
@@ -244,6 +289,44 @@ content = html.Div([html.Div([
                     html.Div([
                              html.Div([
                                         dcc.Graph(id='ve-time-series'),
+                                      ]),
+
+                             ]),
+                    html.H1('Simulación de pronósticos'),
+                    html.Div([
+                            html.Button('Generara simulación', id='button-simulacion', style= {
+                                                                                    'background-color': '#004481',  # Color azul de BBVA
+                                                                                    'border': 'none',
+                                                                                    'color': 'white',
+                                                                                    'text-align': 'center',
+                                                                                    'text-decoration': 'none',
+                                                                                    'display': 'inline-block',
+                                                                                    'font-size': '16px',
+                                                                                    'padding': '10px 20px',
+                                                                                    'margin': '4px 2px',
+                                                                                    'cursor': 'pointer',
+                                                                                    'border-radius': '12px'
+                                                                                })]),
+                    html.Div([
+                                    dash_table.DataTable(
+                                    id='table-simulacion',
+                                    editable = True,
+                                    fixed_rows = {'headers':True, 'data':0},
+                                    merge_duplicate_headers=True,
+                                    style_cell={
+                                        'height': 'auto',
+                                        'minWidth': '180px', 'width': '180px', 'maxWidth': '180px'
+                                    },
+                                    style_table={'height': '300px','overflowY': 'auto','font-family':
+                                                 'Verdana','color':'#004481'},
+                                    style_header={
+                                                        'backgroundColor': 'rgb(600, 600, 600)',
+                                                        'font-family': 'Verdana','color':'white', 'backgroundColor': '#004481'
+                                                    },
+                                )]),
+                    html.Div([
+                             html.Div([
+                                        dcc.Graph(id='simulacion'),
                                       ]),
 
                              ])
@@ -310,6 +393,19 @@ def create_time_series(dff):
             logging.debug(f"Eror en la grafica {e}")
         return fig
 
+def create_time_series_col(dff, colname):
+        try:
+            #logging.debug(dff.columns)
+            #logging.debug(dff)
+            print()
+            fig = px.line(dff, x=dff.index, y=dff[colname])
+            fig.update_layout(paper_bgcolor='#f8f9fa', font_color = '#004481')
+            fig.update_xaxes(color='#004481')
+            fig.update_yaxes(color='#004481',title='Montos en Miles de Millones')
+        except Exception as e:
+            logging.debug(f"Eror en la grafica {e}")
+        return fig
+
 # Define el callback para actualizar el gráfico
 @app.callback(
     Output('x-time-series', 'figure'),
@@ -327,7 +423,7 @@ def update_graph(selected_column):
 
             data_exog = get_exog_historical_data(selected_column).reset_index()
             merged_df = pd.merge(data_exog, data, left_on='fecha', right_on='fechas', how='inner')
-            data_index = merged_df.sort_index(ascending=False)
+            data_index = merged_df.sort_index()
 
             table_columns = [{'name': col, 'id': col} for col in data_index.columns]
         except Exception as e:
@@ -336,6 +432,56 @@ def update_graph(selected_column):
     else:
         # En caso de que no se haya seleccionado un producto
         return go.Figure(), [], []
+
+
+
+@app.callback(
+    Output('ve-time-series', 'figure'),
+    Output('table-forecast', 'data'),
+    Output('table-forecast', 'columns'),
+    [Input('button-forecast', 'n_clicks')],
+    [State('table-sims', 'data'), State('demo-dropdown', 'value')]
+)
+def update_forecast(n_clicks, table_data, column_selct):
+    if n_clicks is not None and n_clicks > 0:
+        try:
+            df = get_forecast(column_selct)
+            
+            fig = create_time_series_col(df, column_selct)
+            table_columns = [{'name': col, 'id': col} for col in df.columns]
+
+            return fig, df.to_dict('records'), table_columns
+        except Exception as e:
+            logging.debug(e)
+    else:    
+        return go.Figure(),[],[]
+
+@app.callback(
+    Output('simulacion', 'figure'),
+    Output('table-simulacion', 'data'),
+    Output('table-simulacion', 'columns'),
+    [Input('button-simulacion', 'n_clicks')],
+    [State('table-sims', 'data'), State('table-simulacion', 'data'), State('demo-dropdown', 'value')]
+)
+def update_forecast(n_clicks, table_data, table_simulado,column_selct):
+    if n_clicks is not None and n_clicks > 0:
+        try:
+            if table_simulado is not None:
+                logging.debug("Ejecuta la función")
+                logging.debug(table_simulado)
+                table_simulado = [{k: v for k, v in d.items() if k != 'fecha' and k!= column_selct} for d in table_simulado]
+                df = get_forecast_simulacion(table_data, column_selct)
+            else:
+                logging.debug("Toma forecast")
+                df = get_forecast(column_selct)
+                fig = create_time_series_col(df, column_selct)
+                table_columns = [{'name': col, 'id': col} for col in df.columns]
+
+                return fig, df.to_dict('records'), table_columns
+        except Exception as e:
+            logging.debug(e)
+    else:    
+        return go.Figure(),[],[]
 
 
 

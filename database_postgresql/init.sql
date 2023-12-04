@@ -5,6 +5,12 @@ CREATE TABLE db_simulations (
     variables VARCHAR(255),
     values_variables NUMERIC
 );
+
+CREATE TABLE db_models_features (
+    model_name VARCHAR(40),
+    variables_model VARCHAR(255)
+);
+
 CREATE TABLE db_historical_exogen_variables (
     fecha DATE NOT NULL,
     pib DECIMAL,
@@ -105,3 +111,19 @@ COPY db_forecast_exogen_variables
   NULL as 'NA';
 
 INSERT INTO db_simulations (id_sim, another, producto, variables, values_variables) VALUES (1,'HOLA','Producto A', 'Variable A', 10);
+INSERT INTO db_models_features (model_name, variables_model) VALUES ('hipotecaria','empleo_imss');
+INSERT INTO db_models_features (model_name, variables_model) VALUES ('hipotecaria','tasa_desempleo');
+INSERT INTO db_models_features (model_name, variables_model) VALUES ('hipotecaria','bonos_m_10a');
+INSERT INTO db_models_features (model_name, variables_model) VALUES ('hipotecaria','inpc');
+INSERT INTO db_models_features (model_name, variables_model) VALUES ('empresas_mn','empleo_imss');
+INSERT INTO db_models_features (model_name, variables_model) VALUES ('empresas_mn','cetes_12m');
+INSERT INTO db_models_features (model_name, variables_model) VALUES ('empresas_mn','tasa_desempleo');
+INSERT INTO db_models_features (model_name, variables_model) VALUES ('empresas_mn','salario');
+INSERT INTO db_models_features (model_name, variables_model) VALUES ('empresas_mn','inpc');
+INSERT INTO db_models_features (model_name, variables_model) VALUES ('vista_red_mn','empleo_imss');
+INSERT INTO db_models_features (model_name, variables_model) VALUES ('vista_red_mn','tasa_desempleo');
+INSERT INTO db_models_features (model_name, variables_model) VALUES ('vista_red_mn','cetes_6m');
+INSERT INTO db_models_features (model_name, variables_model) VALUES ('vista_red_mn','inpc');
+INSERT INTO db_models_features (model_name, variables_model) VALUES ('ahorro_red_mn','empleo_imss');
+INSERT INTO db_models_features (model_name, variables_model) VALUES ('ahorro_red_mn','tasa_desempleo');
+INSERT INTO db_models_features (model_name, variables_model) VALUES ('ahorro_red_mn','inpc');

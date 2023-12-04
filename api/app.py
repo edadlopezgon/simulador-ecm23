@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from sqlalchemy import create_engine
 import logging
 import json
+import pickle
 
 app = Flask(__name__)
 
@@ -50,7 +51,7 @@ def get_data():
     
 @app.route('/get_products_names')
 def get_products_names():
-    querie_data = 'SELECT column_name FROM information_schema.columns WHERE table_name = \'db_historical_data\'  AND column_name != \'fechas\';'
+    querie_data = 'SELECT column_name FROM information_schema.columns WHERE table_name = \'db_historical_data\'  AND column_name in (\'hipotecaria\', \'empresas_mn\',\'vista_red_mn\',\'ahorro_red_mn\');'
     try:
         logging.debug(execute_queries([querie_data]))
         data_profiles = json.loads(execute_queries([querie_data],"SELECT"))
@@ -63,7 +64,6 @@ def get_products_names():
 @app.route('/get_product_historical_data', methods=['POST'])
 def receive_data():
     if request.method == 'POST':
-
         data = request.get_json()
         selected_column = data['column']
         querie_data = f'SELECT fechas, {selected_column}  FROM db_historical_data ;'
@@ -74,8 +74,33 @@ def receive_data():
             return {"message":"error en consulta de datos en servicio faker-service"}
         
         return json.dumps(data_profiles)
-        #return {"message":f"error en consulta de datos en servicio faker-service {selected_column}"}
     
+@app.route('/get_historical_training', methods=['POST'])
+def receive_data_training():
+    if request.method == 'POST':
+
+        data = request.get_json()
+        selected_column = data['column']
+        querie_data = f'SELECT  variables_model  FROM db_models_features WHERE model_name= \'{selected_column}\' ;'
+        try:
+            data_profiles = json.loads(execute_queries([querie_data],"SELECT"))   
+            columns_names = ','.join([x['variables_model'] for x in data_profiles ]) 
+            logging.debug(columns_names)        
+        except Exception as ex:
+            logging.debug(ex)
+            return {"message":"error en consulta de datos en servicio faker-service"}
+        
+        querie_data = f'SELECT  fecha, {columns_names} FROM db_historical_exogen_variables;'
+        try:
+            data_profiles = json.loads(execute_queries([querie_data],"SELECT"))   
+            #logging.debug(data_profiles)        
+        except Exception as ex:
+            logging.debug(ex)
+            return {"message":"error en consulta de datos en servicio faker-service"}
+        
+        return json.dumps(data_profiles)
+         
+
 
 
 

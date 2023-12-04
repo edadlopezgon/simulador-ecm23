@@ -48,6 +48,21 @@ def get_product_historical_data(selected_column):
     
     return df
 
+def get_exog_historical_data(selected_column):
+    url = "http://api-service:3000/get_historical_training"
+    payload = {'column': selected_column}
+    json_data = requests.post(url, json=payload).json()
+    
+    df = pd.DataFrame(json_data)
+    df['fecha'] = pd.to_datetime(df['fecha'], format='%Y-%m-%d')
+    col_numeric = [x for x in df.columns.tolist() if x != 'fecha']
+    logging.debug(col_numeric)
+    
+    df[col_numeric] = df[col_numeric].apply(pd.to_numeric, errors='coerce')
+    df.set_index('fecha', inplace=True)
+    
+    return df
+
 
 
 app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -174,7 +189,7 @@ content = html.Div([html.Div([
                                         id='demo-dropdown',
                                         options=[{'label': x, 'value': x} for x in get_product_names()],
                                         placeholder = 'Elige un producto',
-                                        value='vista_minorista_mn',
+                                        value='hipotecaria',
                                         style={'textAlign': 'center','font-family': 'Verdana','color':'#004481'}
                                         #multi =True
                                         ),
@@ -185,6 +200,7 @@ content = html.Div([html.Div([
                                      ]),
 
                             ]),
+                    html.H3('Datos utilizados para pronósticar'),
                     html.Div([
                                     dash_table.DataTable(
                                     id='table-sims',
@@ -194,9 +210,9 @@ content = html.Div([html.Div([
                                     page_action='native',
                                     page_current=0,
                                     page_size=10,
-                                    fixed_columns={'headers': True, 'data': 1 },
-                                    style_table={'height': '300px','width':'500px','overflowY': 'auto','font-family':
+                                    style_table={'height': '300px','overflowY': 'auto','overflowX': 'auto','font-family':
                                                  'Verdana','color':'#004481'},
+                                    style_cell={'minWidth': 95, 'width': 150, 'maxWidth': 200, 'textAlign': 'left'},
                                     style_header={
                                                         'backgroundColor': 'rgb(230, 230, 230)',
                                                         'font-family': 'Verdana','color':'white', 'backgroundColor': '#004481'
@@ -218,7 +234,7 @@ content = html.Div([html.Div([
                                         'height': 'auto',
                                         'minWidth': '180px', 'width': '180px', 'maxWidth': '180px'
                                     },
-                                    style_table={'height': '300px','width':'3000px','overflowY': 'auto','font-family':
+                                    style_table={'height': '300px','overflowY': 'auto','font-family':
                                                  'Verdana','color':'#004481'},
                                     style_header={
                                                         'backgroundColor': 'rgb(600, 600, 600)',
@@ -308,7 +324,11 @@ def update_graph(selected_column):
             data = get_product_historical_data(selected_column)
             # Generar la gráfica usando la función create_time_series
             fig = create_time_series(data)
-            data_index = data.sort_index(ascending=False).reset_index()
+
+            data_exog = get_exog_historical_data(selected_column).reset_index()
+            merged_df = pd.merge(data_exog, data, left_on='fecha', right_on='fechas', how='inner')
+            data_index = merged_df.sort_index(ascending=False)
+
             table_columns = [{'name': col, 'id': col} for col in data_index.columns]
         except Exception as e:
             logging.debug(e)

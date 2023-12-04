@@ -24,6 +24,7 @@ services:
     build: ./api
     volumes:
       - ./api:/usr/src/app
+      - ./models/:/models/
     ports:
       - 5000:3000
     networks:

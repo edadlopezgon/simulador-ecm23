@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  database-service:
+    image: "postgres"
+    env_file:
+      - ./database_postgresql/database.env
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ./database_postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - database-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - app-simulador
+    container_name: postgresql-service
+
+  api-service:
+    restart: always
+    build: ./api
+    volumes:
+      - ./api:/usr/src/app
+    ports:
+      - 5000:3000
+    networks:
+      - app-simulador
+    depends_on:
+      - database-service
+    container_name: servicio_simulaciones
+
+networks:
+  app-simulador:
+    driver: bridge
+volumes:
+  database-data:

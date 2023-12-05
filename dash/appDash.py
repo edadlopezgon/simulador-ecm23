@@ -87,12 +87,20 @@ def get_forecast_simulacion(data, model_name):
     url = "http://api-service:3000/get_forecast_simulacion"
     info = [{'variables':data, 'model_name': model_name}]
     json_data = requests.post(url, json=json.dumps(info)).json()
+    data = json_data[0]
+    logging.debug(data)
+    df = pd.DataFrame(data['variables'])
+    forecast = data['forecast']
+    forecast = [float(x) for x in forecast]
     
     #df = pd.DataFrame(json_data)
-    #df['fechas'] = pd.to_datetime(df['fechas'], format='%Y-%m-%d')
-    #df[selected_column] = pd.to_numeric(df[selected_column])
-    #df.set_index('fechas', inplace=True)
-    df = pd.DataFrame()
+    df['fecha_pronos'] = pd.to_datetime(df['fecha_pronos'])
+
+    col_numeric = [x for x in df.columns.tolist() if x != 'fecha_pronos']
+    df[col_numeric] = df[col_numeric].apply(pd.to_numeric, errors='coerce')
+    df[model_name] = forecast
+    
+    
     return df
 
 
@@ -465,19 +473,24 @@ def update_forecast(n_clicks, table_data, column_selct):
 )
 def update_forecast(n_clicks, table_data, table_simulado,column_selct):
     if n_clicks is not None and n_clicks > 0:
+        logging.debug('Hola')
+        logging.debug(table_simulado)
         try:
-            if table_simulado is not None:
+            if table_simulado != []:
                 logging.debug("Ejecuta la función")
+                #logging.debug(table_simulado)
+                table_simulado = [{k: v for k, v in d.items() if k!= column_selct} for d in table_simulado]
+                logging.debug("Como se manda la información")
                 logging.debug(table_simulado)
-                table_simulado = [{k: v for k, v in d.items() if k != 'fecha' and k!= column_selct} for d in table_simulado]
-                df = get_forecast_simulacion(table_data, column_selct)
+                df = get_forecast_simulacion(table_simulado, column_selct)
+                logging.debug(df)
             else:
-                logging.debug("Toma forecast")
                 df = get_forecast(column_selct)
-                fig = create_time_series_col(df, column_selct)
-                table_columns = [{'name': col, 'id': col} for col in df.columns]
 
-                return fig, df.to_dict('records'), table_columns
+            fig = create_time_series_col(df, column_selct)
+            table_columns = [{'name': col, 'id': col} for col in df.columns]
+
+            return fig, df.to_dict('records'), table_columns
         except Exception as e:
             logging.debug(e)
     else:    

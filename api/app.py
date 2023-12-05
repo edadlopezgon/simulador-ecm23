@@ -154,7 +154,9 @@ def generate_forecast_simulate():
                 with open(f'models/{model_name}.pkl', 'rb') as f:
                     loaded_model = pickle.load(f)
                     logging.debug(type(loaded_model)) 
-                    generate_forecast(data, loaded_model)
+                    forecast = generate_forecast(data, loaded_model)
+                    data = [{"variables":data, "forecast": forecast}]
+
             except Exception as ex:
                 logging.debug(ex)
                 return {"message":"error en consulta de datos en servicio faker-service"}
@@ -163,11 +165,12 @@ def generate_forecast_simulate():
         except Exception as e:
             logging.debug(e)
     
-    return {"message":"Recibido"}
+    return json.dumps(data)
          
 
 def generate_forecast(data, model):
     data_pd = pd.DataFrame(data)
+    logging.debug(data_pd)
     if 'fecha_pronos' in data_pd.columns:
         data_pd.drop('fecha_pronos', axis=1, inplace=True) 
     forecast = model.predict(data_pd)
